@@ -8,7 +8,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .forms import ActionItemFormSet, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
-from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, Question
+from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, ONE_ON_ONE_OVERDUE_DAYS, Question
 from .ollama import OllamaError, generate, list_models
 from .prompt_defaults import DEFAULT_SUMMARY_PROMPT, DEFAULT_TALKING_POINTS_PROMPT
 from .prompts import build_summary_prompt, build_talking_points_prompt
@@ -311,14 +311,23 @@ def ai_settings(request):
     )
 
 
-def todo_list(request):
+def dashboard(request):
     show_completed = request.GET.get("show") == "all"
     items = ActionItem.objects.select_related("one_on_one", "one_on_one__report")
     if not show_completed:
         items = items.filter(is_done=False)
     items = items.order_by("one_on_one__date", "created_at")
+
+    overdue_reports = [r for r in DirectReport.objects.filter(is_active=True) if r.is_overdue_for_one_on_one]
+    overdue_reports.sort(key=lambda r: (r.last_one_on_one_date is not None, r.last_one_on_one_date))
+
     return render(
         request,
-        "reports/todo_list.html",
-        {"items": items, "show_completed": show_completed},
+        "reports/dashboard.html",
+        {
+            "items": items,
+            "show_completed": show_completed,
+            "overdue_reports": overdue_reports,
+            "overdue_days_threshold": ONE_ON_ONE_OVERDUE_DAYS,
+        },
     )

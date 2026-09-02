@@ -1,7 +1,10 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 
 from .prompt_defaults import DEFAULT_SUMMARY_PROMPT, DEFAULT_TALKING_POINTS_PROMPT
+
+ONE_ON_ONE_OVERDUE_DAYS = 21
 
 
 class Question(models.Model):
@@ -42,6 +45,21 @@ class DirectReport(models.Model):
     def answers_by_question(self):
         """Map of question_id -> Answer for quick template lookups."""
         return {a.question_id: a for a in self.answers.select_related("question")}
+
+    @property
+    def last_one_on_one_date(self):
+        latest = self.one_on_ones.first()  # OneOnOne.Meta.ordering is -date
+        return latest.date if latest else None
+
+    @property
+    def days_since_last_one_on_one(self):
+        last = self.last_one_on_one_date
+        return (timezone.now().date() - last).days if last else None
+
+    @property
+    def is_overdue_for_one_on_one(self):
+        days = self.days_since_last_one_on_one
+        return days is None or days >= ONE_ON_ONE_OVERDUE_DAYS
 
 
 class Answer(models.Model):

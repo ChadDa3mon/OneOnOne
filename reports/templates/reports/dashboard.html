@@ -1,12 +1,42 @@
 {% extends "reports/base.html" %}
-{% block title %}To-Dos{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
+<h1 class="h3 mb-3">Dashboard</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h6">Needs a 1:1</h2>
+        {% if overdue_reports %}
+        <p class="text-muted small">No 1:1 logged in the last {{ overdue_days_threshold }} days.</p>
+        <div class="list-group list-group-flush">
+            {% for report in overdue_reports %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="{% url 'report-detail' report.pk %}">{{ report.name }}</a>
+                    <div class="text-muted small">
+                        {% if report.last_one_on_one_date %}
+                        Last 1:1 {{ report.last_one_on_one_date }} ({{ report.days_since_last_one_on_one }} days ago)
+                        {% else %}
+                        No 1:1 logged yet
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'oneonone-add' report.pk %}" class="btn btn-sm btn-primary">Log a 1:1</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Everyone's had a 1:1 within the last {{ overdue_days_threshold }} days.</p>
+        {% endif %}
+    </div>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">To-Dos</h1>
+    <h2 class="h5 mb-0">To-Dos</h2>
     {% if show_completed %}
-    <a href="{% url 'todo-list' %}" class="btn btn-sm btn-outline-secondary">Hide completed</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">Hide completed</a>
     {% else %}
-    <a href="{% url 'todo-list' %}?show=all" class="btn btn-sm btn-outline-secondary">Show completed</a>
+    <a href="{% url 'dashboard' %}?show=all" class="btn btn-sm btn-outline-secondary">Show completed</a>
     {% endif %}
 </div>
 
@@ -17,7 +47,7 @@
         <div class="list-group-item form-check action-item {% if item.is_done %}done{% endif %}">
             <form method="post" action="{% url 'action-item-toggle' item.pk %}">
                 {% csrf_token %}
-                <input type="hidden" name="next" value="{% url 'todo-list' %}{% if show_completed %}?show=all{% endif %}">
+                <input type="hidden" name="next" value="{% url 'dashboard' %}{% if show_completed %}?show=all{% endif %}">
                 <input class="form-check-input" type="checkbox" onchange="this.form.submit()" {% if item.is_done %}checked{% endif %} id="todo-{{ item.pk }}">
                 <label class="form-check-label" for="todo-{{ item.pk }}">{{ item.description }}</label>
                 <div class="text-muted small">
