@@ -22,7 +22,7 @@
 </div>
 
 {% if settings.host %}
-<div class="card" style="max-width: 480px;">
+<div class="card mb-4" style="max-width: 480px;">
     <div class="card-body">
         <h2 class="h6">Model</h2>
         {% if settings.selected_model %}
@@ -42,6 +42,37 @@
             <button type="submit" name="save_model" value="1" class="btn btn-primary btn-sm">Use this model</button>
         </form>
         {% endif %}
+    </div>
+</div>
+
+<p class="text-muted small">
+    Prompts below can use these placeholders: <code>$who</code> (name/title),
+    <code>$qa</code> (profile Q&amp;A), <code>$action_items</code> (open action items),
+    and, for talking points, <code>$notes</code> (recent 1:1 notes). Unrecognized
+    placeholders are left as-is rather than causing an error.
+</p>
+
+<div class="card mb-4" style="max-width: 640px;">
+    <div class="card-body">
+        <h2 class="h6">Summary prompt</h2>
+        <form method="post">
+            {% csrf_token %}
+            <textarea name="summary_prompt" class="form-control mb-2 font-monospace" rows="12">{{ settings.summary_prompt }}</textarea>
+            <button type="submit" name="save_summary_prompt" value="1" class="btn btn-primary btn-sm">Save prompt</button>
+            <button type="submit" name="reset_summary_prompt" value="1" class="btn btn-outline-secondary btn-sm">Reset to default</button>
+        </form>
+    </div>
+</div>
+
+<div class="card" style="max-width: 640px;">
+    <div class="card-body">
+        <h2 class="h6">Talking points prompt</h2>
+        <form method="post">
+            {% csrf_token %}
+            <textarea name="talking_points_prompt" class="form-control mb-2 font-monospace" rows="12">{{ settings.talking_points_prompt }}</textarea>
+            <button type="submit" name="save_talking_points_prompt" value="1" class="btn btn-primary btn-sm">Save prompt</button>
+            <button type="submit" name="reset_talking_points_prompt" value="1" class="btn btn-outline-secondary btn-sm">Reset to default</button>
+        </form>
     </div>
 </div>
 {% endif %}

@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from .forms import ActionItemFormSet, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
 from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, Question
 from .ollama import OllamaError, generate, list_models
+from .prompt_defaults import DEFAULT_SUMMARY_PROMPT, DEFAULT_TALKING_POINTS_PROMPT
 from .prompts import build_summary_prompt, build_talking_points_prompt
 
 logger = logging.getLogger(__name__)
@@ -95,7 +96,9 @@ def report_ai_summary(request, pk):
         logger.info("Generating AI summary for report %s (%s)", report.pk, report.name)
         try:
             report.ai_summary = generate(
-                ollama_settings.base_url, ollama_settings.selected_model, build_summary_prompt(report)
+                ollama_settings.base_url,
+                ollama_settings.selected_model,
+                build_summary_prompt(report, ollama_settings.summary_prompt),
             )
             report.ai_summary_generated_at = timezone.now()
             report.save(update_fields=["ai_summary", "ai_summary_generated_at"])
@@ -111,7 +114,9 @@ def report_ai_summary(request, pk):
         logger.info("Generating AI talking points for report %s (%s)", report.pk, report.name)
         try:
             report.ai_talking_points = generate(
-                ollama_settings.base_url, ollama_settings.selected_model, build_talking_points_prompt(report)
+                ollama_settings.base_url,
+                ollama_settings.selected_model,
+                build_talking_points_prompt(report, ollama_settings.talking_points_prompt),
             )
             report.ai_talking_points_generated_at = timezone.now()
             report.save(update_fields=["ai_talking_points", "ai_talking_points_generated_at"])
@@ -255,6 +260,32 @@ def ai_settings(request):
         ollama_settings.selected_model = request.POST.get("selected_model", "")
         ollama_settings.save(update_fields=["selected_model", "updated_at"])
         messages.success(request, f"Now using model: {ollama_settings.selected_model}")
+        return redirect("ai-settings")
+
+    if request.method == "POST" and "save_summary_prompt" in request.POST:
+        ollama_settings.summary_prompt = request.POST.get("summary_prompt", "").strip() or DEFAULT_SUMMARY_PROMPT
+        ollama_settings.save(update_fields=["summary_prompt", "updated_at"])
+        messages.success(request, "Summary prompt saved.")
+        return redirect("ai-settings")
+
+    if request.method == "POST" and "reset_summary_prompt" in request.POST:
+        ollama_settings.summary_prompt = DEFAULT_SUMMARY_PROMPT
+        ollama_settings.save(update_fields=["summary_prompt", "updated_at"])
+        messages.success(request, "Summary prompt reset to default.")
+        return redirect("ai-settings")
+
+    if request.method == "POST" and "save_talking_points_prompt" in request.POST:
+        ollama_settings.talking_points_prompt = (
+            request.POST.get("talking_points_prompt", "").strip() or DEFAULT_TALKING_POINTS_PROMPT
+        )
+        ollama_settings.save(update_fields=["talking_points_prompt", "updated_at"])
+        messages.success(request, "Talking points prompt saved.")
+        return redirect("ai-settings")
+
+    if request.method == "POST" and "reset_talking_points_prompt" in request.POST:
+        ollama_settings.talking_points_prompt = DEFAULT_TALKING_POINTS_PROMPT
+        ollama_settings.save(update_fields=["talking_points_prompt", "updated_at"])
+        messages.success(request, "Talking points prompt reset to default.")
         return redirect("ai-settings")
 
     form = OllamaSettingsForm(instance=ollama_settings)

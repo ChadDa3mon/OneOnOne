@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
 
+from .prompt_defaults import DEFAULT_SUMMARY_PROMPT, DEFAULT_TALKING_POINTS_PROMPT
+
 
 class Question(models.Model):
     """A profile question asked of every direct report (flat, shared list)."""
@@ -90,6 +92,8 @@ class OllamaSettings(models.Model):
     host = models.CharField(max_length=255, blank=True, help_text="Hostname or IP, e.g. 192.168.1.50")
     port = models.PositiveIntegerField(default=11434)
     selected_model = models.CharField(max_length=200, blank=True)
+    summary_prompt = models.TextField(default=DEFAULT_SUMMARY_PROMPT)
+    talking_points_prompt = models.TextField(default=DEFAULT_TALKING_POINTS_PROMPT)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
