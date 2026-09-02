@@ -2,6 +2,7 @@ import logging
 
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -61,6 +62,8 @@ def report_detail(request, pk):
         {"question": q, "answer": existing_answers.get(q.id)} for q in questions
     ]
     one_on_ones = report.one_on_ones.prefetch_related("action_items")
+    ollama_settings = OllamaSettings.load()
+    ai_configured = bool(ollama_settings.host and ollama_settings.selected_model)
     return render(
         request,
         "reports/report_detail.html",
@@ -68,65 +71,59 @@ def report_detail(request, pk):
             "report": report,
             "answer_rows": answer_rows,
             "one_on_ones": one_on_ones,
+            "ai_configured": ai_configured,
         },
     )
 
 
+@require_POST
 def report_ai_summary(request, pk):
     report = get_object_or_404(DirectReport, pk=pk)
     ollama_settings = OllamaSettings.load()
     configured = bool(ollama_settings.host and ollama_settings.selected_model)
+    redirect_url = reverse("report-detail", args=[report.pk]) + "#ai-pane"
 
-    if request.method == "POST":
-        action = "generate_summary" if "generate_summary" in request.POST else (
-            "generate_talking_points" if "generate_talking_points" in request.POST else None
+    if not configured:
+        logger.warning(
+            "AI generation requested for report %s but Ollama isn't configured (host=%r, model=%r)",
+            report.pk, ollama_settings.host, ollama_settings.selected_model,
         )
+        messages.error(request, "Ollama isn't configured — set a host and model first.")
+        return redirect(redirect_url)
 
-        if action and not configured:
-            logger.warning(
-                "AI generation requested for report %s but Ollama isn't configured (host=%r, model=%r)",
-                report.pk, ollama_settings.host, ollama_settings.selected_model,
+    if "generate_summary" in request.POST:
+        logger.info("Generating AI summary for report %s (%s)", report.pk, report.name)
+        try:
+            report.ai_summary = generate(
+                ollama_settings.base_url, ollama_settings.selected_model, build_summary_prompt(report)
             )
-            messages.error(request, "Ollama isn't configured — set a host and model first.")
-            return redirect("report-ai-summary", pk=report.pk)
+            report.ai_summary_generated_at = timezone.now()
+            report.save(update_fields=["ai_summary", "ai_summary_generated_at"])
+        except OllamaError as exc:
+            logger.warning("AI summary generation failed for report %s: %s", report.pk, exc)
+            messages.error(request, str(exc))
+        except Exception:
+            logger.exception("Unexpected error generating AI summary for report %s", report.pk)
+            messages.error(request, "Unexpected error while generating the summary — check the server logs.")
+        return redirect(redirect_url)
 
-        if action == "generate_summary":
-            logger.info("Generating AI summary for report %s (%s)", report.pk, report.name)
-            try:
-                report.ai_summary = generate(
-                    ollama_settings.base_url, ollama_settings.selected_model, build_summary_prompt(report)
-                )
-                report.ai_summary_generated_at = timezone.now()
-                report.save(update_fields=["ai_summary", "ai_summary_generated_at"])
-            except OllamaError as exc:
-                logger.warning("AI summary generation failed for report %s: %s", report.pk, exc)
-                messages.error(request, str(exc))
-            except Exception:
-                logger.exception("Unexpected error generating AI summary for report %s", report.pk)
-                messages.error(request, "Unexpected error while generating the summary — check the server logs.")
-            return redirect("report-ai-summary", pk=report.pk)
+    if "generate_talking_points" in request.POST:
+        logger.info("Generating AI talking points for report %s (%s)", report.pk, report.name)
+        try:
+            report.ai_talking_points = generate(
+                ollama_settings.base_url, ollama_settings.selected_model, build_talking_points_prompt(report)
+            )
+            report.ai_talking_points_generated_at = timezone.now()
+            report.save(update_fields=["ai_talking_points", "ai_talking_points_generated_at"])
+        except OllamaError as exc:
+            logger.warning("AI talking points generation failed for report %s: %s", report.pk, exc)
+            messages.error(request, str(exc))
+        except Exception:
+            logger.exception("Unexpected error generating AI talking points for report %s", report.pk)
+            messages.error(request, "Unexpected error while drafting talking points — check the server logs.")
+        return redirect(redirect_url)
 
-        if action == "generate_talking_points":
-            logger.info("Generating AI talking points for report %s (%s)", report.pk, report.name)
-            try:
-                report.ai_talking_points = generate(
-                    ollama_settings.base_url, ollama_settings.selected_model, build_talking_points_prompt(report)
-                )
-                report.ai_talking_points_generated_at = timezone.now()
-                report.save(update_fields=["ai_talking_points", "ai_talking_points_generated_at"])
-            except OllamaError as exc:
-                logger.warning("AI talking points generation failed for report %s: %s", report.pk, exc)
-                messages.error(request, str(exc))
-            except Exception:
-                logger.exception("Unexpected error generating AI talking points for report %s", report.pk)
-                messages.error(request, "Unexpected error while drafting talking points — check the server logs.")
-            return redirect("report-ai-summary", pk=report.pk)
-
-    return render(
-        request,
-        "reports/ai_summary.html",
-        {"report": report, "configured": configured, "ollama_settings": ollama_settings},
-    )
+    return redirect(redirect_url)
 
 
 @require_POST
