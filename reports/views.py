@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .forms import ActionItemFormSet, DirectReportForm, OneOnOneForm, QuestionForm
@@ -171,4 +172,20 @@ def action_item_toggle(request, pk):
     item = get_object_or_404(ActionItem, pk=pk)
     item.is_done = not item.is_done
     item.save(update_fields=["is_done"])
+    next_url = request.POST.get("next")
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
     return redirect("report-detail", pk=item.one_on_one.report_id)
+
+
+def todo_list(request):
+    show_completed = request.GET.get("show") == "all"
+    items = ActionItem.objects.select_related("one_on_one", "one_on_one__report")
+    if not show_completed:
+        items = items.filter(is_done=False)
+    items = items.order_by("one_on_one__date", "created_at")
+    return render(
+        request,
+        "reports/todo_list.html",
+        {"items": items, "show_completed": show_completed},
+    )

@@ -1,0 +1,37 @@
+{% extends "reports/base.html" %}
+{% block title %}To-Dos{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">To-Dos</h1>
+    {% if show_completed %}
+    <a href="{% url 'todo-list' %}" class="btn btn-sm btn-outline-secondary">Hide completed</a>
+    {% else %}
+    <a href="{% url 'todo-list' %}?show=all" class="btn btn-sm btn-outline-secondary">Show completed</a>
+    {% endif %}
+</div>
+
+{% if items %}
+<div class="card">
+    <div class="list-group list-group-flush">
+        {% for item in items %}
+        <div class="list-group-item form-check action-item {% if item.is_done %}done{% endif %}">
+            <form method="post" action="{% url 'action-item-toggle' item.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'todo-list' %}{% if show_completed %}?show=all{% endif %}">
+                <input class="form-check-input" type="checkbox" onchange="this.form.submit()" {% if item.is_done %}checked{% endif %} id="todo-{{ item.pk }}">
+                <label class="form-check-label" for="todo-{{ item.pk }}">{{ item.description }}</label>
+                <div class="text-muted small">
+                    <a href="{% url 'report-detail' item.one_on_one.report_id %}">{{ item.one_on_one.report.name }}</a>
+                    &middot; {{ item.one_on_one.date }}
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<p class="text-muted">
+    {% if show_completed %}No action items yet.{% else %}No open action items — you're all caught up.{% endif %}
+</p>
+{% endif %}
+{% endblock %}

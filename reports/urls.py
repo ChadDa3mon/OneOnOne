@@ -13,6 +13,7 @@ urlpatterns = [
     path("one-on-ones/<int:pk>/edit/", views.oneonone_edit, name="oneonone-edit"),
     path("one-on-ones/<int:pk>/delete/", views.oneonone_delete, name="oneonone-delete"),
     path("action-items/<int:pk>/toggle/", views.action_item_toggle, name="action-item-toggle"),
+    path("todos/", views.todo_list, name="todo-list"),
     path("questions/", views.question_list, name="question-list"),
     path("questions/<int:pk>/edit/", views.question_edit, name="question-edit"),
     path("questions/<int:pk>/delete/", views.question_delete, name="question-delete"),
