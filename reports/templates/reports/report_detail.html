@@ -9,6 +9,7 @@
         {% if report.start_date %}<div class="text-muted small">Start date: {{ report.start_date }}</div>{% endif %}
     </div>
     <div>
+        <a href="{% url 'report-ai-summary' report.pk %}" class="btn btn-sm btn-outline-primary">AI Summary</a>
         <a href="{% url 'report-edit' report.pk %}" class="btn btn-sm btn-outline-secondary">Edit profile</a>
         <form method="post" action="{% url 'report-delete' report.pk %}" class="d-inline" onsubmit="return confirm('Delete {{ report.name }} and all their notes? This cannot be undone.');">
             {% csrf_token %}

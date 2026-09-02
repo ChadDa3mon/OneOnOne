@@ -1,0 +1,48 @@
+{% extends "reports/base.html" %}
+{% block title %}AI Settings{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">AI Settings</h1>
+<p class="text-muted">Connect to an Ollama instance to enable AI-assisted features.</p>
+
+<div class="card mb-4" style="max-width: 480px;">
+    <div class="card-body">
+        <h2 class="h6">Connection</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" name="save_connection" value="1" class="btn btn-primary btn-sm">Save connection</button>
+        </form>
+    </div>
+</div>
+
+{% if settings.host %}
+<div class="card" style="max-width: 480px;">
+    <div class="card-body">
+        <h2 class="h6">Model</h2>
+        {% if settings.selected_model %}
+        <p class="text-muted small">Currently using <strong>{{ settings.selected_model }}</strong></p>
+        {% endif %}
+
+        {% if fetch_error %}
+        <div class="alert alert-danger">{{ fetch_error }}</div>
+        {% elif models_available %}
+        <form method="post">
+            {% csrf_token %}
+            <select name="selected_model" class="form-control mb-2">
+                {% for model in models_available %}
+                <option value="{{ model }}" {% if model == settings.selected_model %}selected{% endif %}>{{ model }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" name="save_model" value="1" class="btn btn-primary btn-sm">Use this model</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

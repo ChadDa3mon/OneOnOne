@@ -5,6 +5,8 @@ Django settings for the manager project (1:1 / direct-report tracker).
 import os
 from pathlib import Path
 
+from django.contrib.messages import constants as message_constants
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
@@ -92,3 +94,31 @@ STORAGES = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+MESSAGE_TAGS = {
+    message_constants.ERROR: "danger",
+}
+
+# Ensure app logs (e.g. "Calling Ollama generate...") and unhandled request
+# errors both show up in `docker compose logs web` — Django's defaults print
+# neither once DEBUG=False.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}

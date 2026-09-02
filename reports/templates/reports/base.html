@@ -28,6 +28,7 @@
             <a class="nav-link" href="{% url 'report-list' %}">Direct Reports</a>
             <a class="nav-link" href="{% url 'question-list' %}">Questions</a>
             <a class="nav-link" href="{% url 'todo-list' %}">To-Dos</a>
+            <a class="nav-link" href="{% url 'ai-settings' %}">AI Settings</a>
         </div>
         <button type="button" id="theme-toggle" class="btn btn-sm btn-outline-light">Dark mode</button>
     </div>
@@ -35,7 +36,7 @@
 <div class="container pb-5">
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-success">{{ message }}</div>
+            <div class="alert alert-{{ message.tags|default:'success' }}">{{ message }}</div>
         {% endfor %}
     {% endif %}
     {% block content %}{% endblock %}

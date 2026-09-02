@@ -23,6 +23,10 @@ class DirectReport(models.Model):
     start_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    ai_summary = models.TextField(blank=True)
+    ai_summary_generated_at = models.DateTimeField(null=True, blank=True)
+    ai_talking_points = models.TextField(blank=True)
+    ai_talking_points_generated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["name"]
@@ -78,3 +82,28 @@ class ActionItem(models.Model):
 
     def __str__(self):
         return self.description
+
+
+class OllamaSettings(models.Model):
+    """Single shared record of how to reach the user's Ollama instance."""
+
+    host = models.CharField(max_length=255, blank=True, help_text="Hostname or IP, e.g. 192.168.1.50")
+    port = models.PositiveIntegerField(default=11434)
+    selected_model = models.CharField(max_length=200, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Ollama settings"
+        verbose_name_plural = "Ollama settings"
+
+    def __str__(self):
+        return f"Ollama @ {self.host}:{self.port}" if self.host else "Ollama (not configured)"
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def base_url(self):
+        return f"http://{self.host}:{self.port}"

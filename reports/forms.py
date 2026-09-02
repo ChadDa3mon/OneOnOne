@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 
-from .models import ActionItem, Answer, DirectReport, OneOnOne, Question
+from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, Question
 
 
 class BootstrapFormMixin:
@@ -64,3 +64,12 @@ ActionItemFormSet = inlineformset_factory(
     extra=2,
     can_delete=True,
 )
+
+
+class OllamaSettingsForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = OllamaSettings
+        fields = ["host", "port"]
+        widgets = {
+            "host": forms.TextInput(attrs={"placeholder": "192.168.1.50"}),
+        }

@@ -1,10 +1,17 @@
+import logging
+
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from .forms import ActionItemFormSet, DirectReportForm, OneOnOneForm, QuestionForm
-from .models import ActionItem, Answer, DirectReport, OneOnOne, Question
+from .forms import ActionItemFormSet, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
+from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, Question
+from .ollama import OllamaError, generate, list_models
+from .prompts import build_summary_prompt, build_talking_points_prompt
+
+logger = logging.getLogger(__name__)
 
 
 def report_list(request):
@@ -62,6 +69,63 @@ def report_detail(request, pk):
             "answer_rows": answer_rows,
             "one_on_ones": one_on_ones,
         },
+    )
+
+
+def report_ai_summary(request, pk):
+    report = get_object_or_404(DirectReport, pk=pk)
+    ollama_settings = OllamaSettings.load()
+    configured = bool(ollama_settings.host and ollama_settings.selected_model)
+
+    if request.method == "POST":
+        action = "generate_summary" if "generate_summary" in request.POST else (
+            "generate_talking_points" if "generate_talking_points" in request.POST else None
+        )
+
+        if action and not configured:
+            logger.warning(
+                "AI generation requested for report %s but Ollama isn't configured (host=%r, model=%r)",
+                report.pk, ollama_settings.host, ollama_settings.selected_model,
+            )
+            messages.error(request, "Ollama isn't configured — set a host and model first.")
+            return redirect("report-ai-summary", pk=report.pk)
+
+        if action == "generate_summary":
+            logger.info("Generating AI summary for report %s (%s)", report.pk, report.name)
+            try:
+                report.ai_summary = generate(
+                    ollama_settings.base_url, ollama_settings.selected_model, build_summary_prompt(report)
+                )
+                report.ai_summary_generated_at = timezone.now()
+                report.save(update_fields=["ai_summary", "ai_summary_generated_at"])
+            except OllamaError as exc:
+                logger.warning("AI summary generation failed for report %s: %s", report.pk, exc)
+                messages.error(request, str(exc))
+            except Exception:
+                logger.exception("Unexpected error generating AI summary for report %s", report.pk)
+                messages.error(request, "Unexpected error while generating the summary — check the server logs.")
+            return redirect("report-ai-summary", pk=report.pk)
+
+        if action == "generate_talking_points":
+            logger.info("Generating AI talking points for report %s (%s)", report.pk, report.name)
+            try:
+                report.ai_talking_points = generate(
+                    ollama_settings.base_url, ollama_settings.selected_model, build_talking_points_prompt(report)
+                )
+                report.ai_talking_points_generated_at = timezone.now()
+                report.save(update_fields=["ai_talking_points", "ai_talking_points_generated_at"])
+            except OllamaError as exc:
+                logger.warning("AI talking points generation failed for report %s: %s", report.pk, exc)
+                messages.error(request, str(exc))
+            except Exception:
+                logger.exception("Unexpected error generating AI talking points for report %s", report.pk)
+                messages.error(request, "Unexpected error while drafting talking points — check the server logs.")
+            return redirect("report-ai-summary", pk=report.pk)
+
+    return render(
+        request,
+        "reports/ai_summary.html",
+        {"report": report, "configured": configured, "ollama_settings": ollama_settings},
     )
 
 
@@ -176,6 +240,47 @@ def action_item_toggle(request, pk):
     if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
         return redirect(next_url)
     return redirect("report-detail", pk=item.one_on_one.report_id)
+
+
+def ai_settings(request):
+    ollama_settings = OllamaSettings.load()
+
+    if request.method == "POST" and "save_connection" in request.POST:
+        form = OllamaSettingsForm(request.POST, instance=ollama_settings)
+        if form.is_valid():
+            saved = form.save(commit=False)
+            saved.selected_model = ""
+            saved.save()
+            messages.success(request, "Connection settings saved.")
+        return redirect("ai-settings")
+
+    if request.method == "POST" and "save_model" in request.POST:
+        ollama_settings.selected_model = request.POST.get("selected_model", "")
+        ollama_settings.save(update_fields=["selected_model", "updated_at"])
+        messages.success(request, f"Now using model: {ollama_settings.selected_model}")
+        return redirect("ai-settings")
+
+    form = OllamaSettingsForm(instance=ollama_settings)
+    models_available = []
+    fetch_error = None
+    if ollama_settings.host:
+        try:
+            models_available = list_models(ollama_settings.base_url)
+            if not models_available:
+                fetch_error = "Connected, but no models are installed on that Ollama instance."
+        except OllamaError as exc:
+            fetch_error = str(exc)
+
+    return render(
+        request,
+        "reports/ai_settings.html",
+        {
+            "form": form,
+            "settings": ollama_settings,
+            "models_available": models_available,
+            "fetch_error": fetch_error,
+        },
+    )
 
 
 def todo_list(request):
