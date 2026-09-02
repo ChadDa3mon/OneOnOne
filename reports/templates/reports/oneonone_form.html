@@ -1,0 +1,41 @@
+{% extends "reports/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ title }}</h1>
+<form method="post" class="col-md-8">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+    </div>
+    {% endfor %}
+
+    <h2 class="h6 mt-4">Action items</h2>
+    {{ formset.management_form }}
+    {% for item_form in formset %}
+    <div class="row g-2 align-items-center mb-2">
+        <div class="col-8">{{ item_form.description }}</div>
+        <div class="col-2 form-check">
+            {{ item_form.is_done }}
+            <label class="form-check-label small" for="{{ item_form.is_done.id_for_label }}">Done</label>
+        </div>
+        <div class="col-2">
+            {% if item_form.instance.pk %}
+            <div class="form-check">
+                {{ item_form.DELETE }}
+                <label class="form-check-label small" for="{{ item_form.DELETE.id_for_label }}">Remove</label>
+            </div>
+            {% endif %}
+        </div>
+        {{ item_form.id }}
+    </div>
+    {% endfor %}
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'report-detail' report.pk %}" class="btn btn-link">Cancel</a>
+    </div>
+</form>
+{% endblock %}

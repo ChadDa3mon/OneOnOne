@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - manager_data:/data
+    environment:
+      DJANGO_DB_PATH: /data/db.sqlite3
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+    restart: unless-stopped
+
+volumes:
+  manager_data:

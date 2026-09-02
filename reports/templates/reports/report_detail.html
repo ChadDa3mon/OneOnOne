@@ -1,0 +1,84 @@
+{% extends "reports/base.html" %}
+{% block title %}{{ report.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="h3 mb-0">{{ report.name }}{% if not report.is_active %} <span class="badge bg-secondary">inactive</span>{% endif %}</h1>
+        {% if report.title %}<div class="text-muted">{{ report.title }}</div>{% endif %}
+        {% if report.email %}<div class="text-muted small">{{ report.email }}</div>{% endif %}
+        {% if report.start_date %}<div class="text-muted small">Start date: {{ report.start_date }}</div>{% endif %}
+    </div>
+    <div>
+        <a href="{% url 'report-edit' report.pk %}" class="btn btn-sm btn-outline-secondary">Edit profile</a>
+        <form method="post" action="{% url 'report-delete' report.pk %}" class="d-inline" onsubmit="return confirm('Delete {{ report.name }} and all their notes? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#questions-pane" type="button">Profile Questions</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#oneonone-pane" type="button">1:1 History</button></li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="questions-pane">
+        {% if answer_rows %}
+        <form method="post" action="{% url 'save-answers' report.pk %}">
+            {% csrf_token %}
+            {% for row in answer_rows %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">{{ row.question.text }}</label>
+                <textarea class="form-control" name="question_{{ row.question.id }}" rows="3">{% if row.answer %}{{ row.answer.text }}{% endif %}</textarea>
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Save answers</button>
+        </form>
+        {% else %}
+        <p class="text-muted">No profile questions defined yet. <a href="{% url 'question-list' %}">Add some questions</a> to start building a profile.</p>
+        {% endif %}
+    </div>
+
+    <div class="tab-pane fade" id="oneonone-pane">
+        <div class="d-flex justify-content-end mb-3">
+            <a href="{% url 'oneonone-add' report.pk %}" class="btn btn-primary btn-sm">Log a 1:1</a>
+        </div>
+        {% if one_on_ones %}
+        {% for meeting in one_on_ones %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h2 class="h6">{{ meeting.date }}</h2>
+                    <div>
+                        <a href="{% url 'oneonone-edit' meeting.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <form method="post" action="{% url 'oneonone-delete' meeting.pk %}" class="d-inline" onsubmit="return confirm('Delete this 1:1 entry?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% if meeting.notes %}<p class="mb-2" style="white-space: pre-wrap;">{{ meeting.notes }}</p>{% endif %}
+                {% if meeting.action_items.all %}
+                <div class="mt-2">
+                    <div class="text-muted small mb-1">Action items</div>
+                    {% for item in meeting.action_items.all %}
+                    <div class="form-check action-item {% if item.is_done %}done{% endif %}">
+                        <form method="post" action="{% url 'action-item-toggle' item.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <input class="form-check-input" type="checkbox" onchange="this.form.submit()" {% if item.is_done %}checked{% endif %} id="item-{{ item.pk }}">
+                            <label class="form-check-label" for="item-{{ item.pk }}">{{ item.description }}</label>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted">No 1:1 notes logged yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

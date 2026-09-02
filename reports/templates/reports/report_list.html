@@ -1,0 +1,24 @@
+{% extends "reports/base.html" %}
+{% block title %}Direct Reports{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Direct Reports</h1>
+    <a href="{% url 'report-add' %}" class="btn btn-primary">Add direct report</a>
+</div>
+
+{% if reports %}
+<div class="list-group">
+    {% for report in reports %}
+    <a href="{% url 'report-detail' report.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <div>
+            <div class="fw-semibold">{{ report.name }}{% if not report.is_active %} <span class="badge bg-secondary">inactive</span>{% endif %}</div>
+            {% if report.title %}<div class="text-muted small">{{ report.title }}</div>{% endif %}
+        </div>
+        <span class="text-muted small">{{ report.one_on_ones.count }} 1:1{{ report.one_on_ones.count|pluralize }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">No direct reports yet. Add one to get started.</p>
+{% endif %}
+{% endblock %}
