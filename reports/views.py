@@ -14,8 +14,17 @@ from django.views.decorators.http import require_POST
 from .forms import ActionItemFormSet, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
 from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, ONE_ON_ONE_OVERDUE_DAYS, Question
 from .ollama import OllamaError, generate, list_models
-from .prompt_defaults import DEFAULT_SUMMARY_PROMPT, DEFAULT_TALKING_POINTS_PROMPT
-from .prompts import build_summary_prompt, build_talking_points_prompt
+from .prompt_defaults import (
+    DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT,
+    DEFAULT_SUMMARY_PROMPT,
+    DEFAULT_TALKING_POINTS_PROMPT,
+)
+from .prompts import (
+    build_extract_action_items_prompt,
+    build_summary_prompt,
+    build_talking_points_prompt,
+    parse_action_items,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -183,9 +192,66 @@ def question_delete(request, pk):
     return redirect("question-list")
 
 
+def _suggest_action_items(request, one_on_one_instance):
+    """Handle a 'suggest_action_items' submit: ask Ollama to find action items
+    in the notes text and append them as new, unsaved rows onto the action
+    item formset data. Nothing is saved here - the caller re-renders the form
+    with these rows included so the user can edit/remove them before Save.
+    """
+    data = request.POST.copy()
+    notes_text = data.get("notes", "")
+    ollama_settings = OllamaSettings.load()
+
+    if not (ollama_settings.host and ollama_settings.selected_model):
+        messages.error(request, "Ollama isn't configured — set a host and model first.")
+    elif not notes_text.strip():
+        messages.error(request, "Add some notes first, then suggest action items from them.")
+    else:
+        try:
+            raw = generate(
+                ollama_settings.base_url,
+                ollama_settings.selected_model,
+                build_extract_action_items_prompt(notes_text, ollama_settings.extract_action_items_prompt),
+            )
+            suggested = parse_action_items(raw)
+        except OllamaError as exc:
+            logger.warning("Action item extraction failed: %s", exc)
+            messages.error(request, str(exc))
+        except Exception:
+            logger.exception("Unexpected error extracting action items")
+            messages.error(request, "Unexpected error while finding action items — check the server logs.")
+        else:
+            if suggested:
+                prefix = ActionItemFormSet.get_default_prefix()
+                total_key = f"{prefix}-TOTAL_FORMS"
+                total = int(data.get(total_key, 0))
+                for text in suggested:
+                    data[f"{prefix}-{total}-description"] = text
+                    data[f"{prefix}-{total}-id"] = ""
+                    total += 1
+                data[total_key] = str(total)
+                messages.success(
+                    request, f"Found {len(suggested)} possible action item(s) below — review, edit, or remove before saving."
+                )
+            else:
+                messages.success(request, "No action items found in the notes.")
+
+    form = OneOnOneForm(data, instance=one_on_one_instance)
+    formset = ActionItemFormSet(data, instance=one_on_one_instance)
+    return form, formset
+
+
 def oneonone_add(request, pk):
     report = get_object_or_404(DirectReport, pk=pk)
     if request.method == "POST":
+        if "suggest_action_items" in request.POST:
+            form, formset = _suggest_action_items(request, None)
+            return render(
+                request,
+                "reports/oneonone_form.html",
+                {"form": form, "formset": formset, "report": report, "title": f"New 1:1 with {report.name}"},
+            )
+
         form = OneOnOneForm(request.POST)
         if form.is_valid():
             one_on_one = form.save(commit=False)
@@ -211,6 +277,14 @@ def oneonone_edit(request, pk):
     one_on_one = get_object_or_404(OneOnOne, pk=pk)
     report = one_on_one.report
     if request.method == "POST":
+        if "suggest_action_items" in request.POST:
+            form, formset = _suggest_action_items(request, one_on_one)
+            return render(
+                request,
+                "reports/oneonone_form.html",
+                {"form": form, "formset": formset, "report": report, "title": f"Edit 1:1 with {report.name}"},
+            )
+
         form = OneOnOneForm(request.POST, instance=one_on_one)
         formset = ActionItemFormSet(request.POST, instance=one_on_one)
         if form.is_valid() and formset.is_valid():
@@ -290,6 +364,20 @@ def ai_settings(request):
         ollama_settings.talking_points_prompt = DEFAULT_TALKING_POINTS_PROMPT
         ollama_settings.save(update_fields=["talking_points_prompt", "updated_at"])
         messages.success(request, "Talking points prompt reset to default.")
+        return redirect("ai-settings")
+
+    if request.method == "POST" and "save_extract_action_items_prompt" in request.POST:
+        ollama_settings.extract_action_items_prompt = (
+            request.POST.get("extract_action_items_prompt", "").strip() or DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT
+        )
+        ollama_settings.save(update_fields=["extract_action_items_prompt", "updated_at"])
+        messages.success(request, "Action item extraction prompt saved.")
+        return redirect("ai-settings")
+
+    if request.method == "POST" and "reset_extract_action_items_prompt" in request.POST:
+        ollama_settings.extract_action_items_prompt = DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT
+        ollama_settings.save(update_fields=["extract_action_items_prompt", "updated_at"])
+        messages.success(request, "Action item extraction prompt reset to default.")
         return redirect("ai-settings")
 
     form = OllamaSettingsForm(instance=ollama_settings)

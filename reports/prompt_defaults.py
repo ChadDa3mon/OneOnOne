@@ -1,6 +1,7 @@
-# Default prompt templates for the AI Summary and Talking Points features.
-# Editable per-instance via the AI Settings page (stored on OllamaSettings);
-# these are just the starting point for a fresh install.
+# Default prompt templates for the AI-assisted features (summary, talking
+# points, action item extraction). Editable per-instance via the AI Settings
+# page (stored on OllamaSettings); these are just the starting point for a
+# fresh install.
 #
 # Available placeholders: $who, $qa, $action_items, $notes
 
@@ -25,3 +26,10 @@ $action_items
 
 Notes from recent 1:1s (most recent first):
 $notes"""
+
+DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT = """You are reviewing raw notes from a 1:1 with a direct report. Identify any concrete action items, follow-ups, or commitments mentioned in the notes below - things someone said they would do, or that were agreed on as a next step.
+
+Notes:
+$notes
+
+List each action item on its own line, as plain text with no numbering, bullets, or extra commentary. If there are no action items, respond with exactly: NONE"""

@@ -12,6 +12,11 @@
     </div>
     {% endfor %}
 
+    <button type="submit" name="suggest_action_items" value="1" class="btn btn-outline-primary btn-sm ai-submit"
+            data-loading-text="Finding action items… this can take a minute" formnovalidate>
+        Suggest action items from notes
+    </button>
+
     <h2 class="h6 mt-4">Action items</h2>
     {{ formset.management_form }}
     {% for item_form in formset %}
@@ -22,7 +27,7 @@
             <label class="form-check-label small" for="{{ item_form.is_done.id_for_label }}">Done</label>
         </div>
         <div class="col-2">
-            {% if item_form.instance.pk %}
+            {% if item_form.instance.pk or item_form.description.value %}
             <div class="form-check">
                 {{ item_form.DELETE }}
                 <label class="form-check-label small" for="{{ item_form.DELETE.id_for_label }}">Remove</label>

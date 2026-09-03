@@ -59,6 +59,25 @@
         });
     })();
 </script>
+<script>
+    // Any submit button marked class="ai-submit" triggers a slow (Ollama-backed)
+    // action. Disable and relabel just that button once its form is submitted -
+    // using event.submitter (not "the form's first submit button") because a form
+    // can have other, ordinary buttons that should submit normally.
+    document.addEventListener("submit", function (event) {
+        var button = event.submitter;
+        if (!button || !button.classList.contains("ai-submit")) return;
+        var loadingText = button.dataset.loadingText || "Generating… this can take a minute";
+        // Disabling the button synchronously here would drop its name=value
+        // pair from the submitted form data in most browsers (a disabled
+        // control is excluded once the submit fires) - deferring to the next
+        // tick lets the browser finish capturing the submission first.
+        setTimeout(function () {
+            button.disabled = true;
+            button.textContent = loadingText;
+        }, 0);
+    });
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

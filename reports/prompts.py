@@ -1,7 +1,14 @@
+import re
 from string import Template
 
 from .models import ActionItem, Question
-from .prompt_defaults import DEFAULT_SUMMARY_PROMPT, DEFAULT_TALKING_POINTS_PROMPT
+from .prompt_defaults import (
+    DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT,
+    DEFAULT_SUMMARY_PROMPT,
+    DEFAULT_TALKING_POINTS_PROMPT,
+)
+
+_LEADING_BULLET_RE = re.compile(r"^[\-\*•]\s*|^\d+[\.\)]\s*")
 
 
 def _qa_lines(report):
@@ -47,3 +54,26 @@ def build_summary_prompt(report, template_text=None):
 
 def build_talking_points_prompt(report, template_text=None):
     return render_prompt(template_text or DEFAULT_TALKING_POINTS_PROMPT, report)
+
+
+def build_extract_action_items_prompt(notes_text, template_text=None):
+    template = template_text or DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT
+    return Template(template).safe_substitute({"notes": notes_text})
+
+
+def parse_action_items(raw_text, limit=10):
+    """Turn a model's line-per-item response into a clean list of item strings.
+
+    Defensively strips bullet/numbering markers even though the prompt asks
+    the model not to include them, since smaller local models don't always
+    follow that instruction.
+    """
+    items = []
+    for line in raw_text.splitlines():
+        line = _LEADING_BULLET_RE.sub("", line.strip()).strip()
+        if not line or line.upper() == "NONE":
+            continue
+        items.append(line)
+        if len(items) >= limit:
+            break
+    return items

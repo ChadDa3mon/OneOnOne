@@ -101,9 +101,9 @@
                 {% else %}
                 <p class="text-muted">No summary generated yet.</p>
                 {% endif %}
-                <form method="post" action="{% url 'report-ai-summary' report.pk %}" class="generate-form">
+                <form method="post" action="{% url 'report-ai-summary' report.pk %}">
                     {% csrf_token %}
-                    <button type="submit" name="generate_summary" value="1" class="btn btn-primary btn-sm">
+                    <button type="submit" name="generate_summary" value="1" class="btn btn-primary btn-sm ai-submit">
                         {% if report.ai_summary %}Regenerate summary{% else %}Generate summary{% endif %}
                     </button>
                 </form>
@@ -123,9 +123,9 @@
                 {% else %}
                 <p class="text-muted">No talking points drafted yet.</p>
                 {% endif %}
-                <form method="post" action="{% url 'report-ai-summary' report.pk %}" class="generate-form">
+                <form method="post" action="{% url 'report-ai-summary' report.pk %}">
                     {% csrf_token %}
-                    <button type="submit" name="generate_talking_points" value="1" class="btn btn-primary btn-sm">
+                    <button type="submit" name="generate_talking_points" value="1" class="btn btn-primary btn-sm ai-submit">
                         {% if report.ai_talking_points %}Redraft talking points{% else %}Draft talking points{% endif %}
                     </button>
                 </form>
@@ -138,21 +138,6 @@
 
 {% block extra_js %}
 <script>
-    document.querySelectorAll(".generate-form").forEach(function (form) {
-        form.addEventListener("submit", function () {
-            var button = form.querySelector("button[type=submit]");
-            // Disabling the clicked submit button synchronously in the submit
-            // handler drops its name=value pair from the submitted form data
-            // in most browsers, since the button is excluded once disabled.
-            // Deferring to the next tick lets the browser finish capturing
-            // the submission first.
-            setTimeout(function () {
-                button.disabled = true;
-                button.textContent = "Generating… this can take a minute";
-            }, 0);
-        });
-    });
-
     // Reopen the tab named in the URL hash (e.g. after redirecting back
     // here from a form submission on the AI Summary tab).
     document.addEventListener("DOMContentLoaded", function () {

@@ -2,7 +2,11 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
-from .prompt_defaults import DEFAULT_SUMMARY_PROMPT, DEFAULT_TALKING_POINTS_PROMPT
+from .prompt_defaults import (
+    DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT,
+    DEFAULT_SUMMARY_PROMPT,
+    DEFAULT_TALKING_POINTS_PROMPT,
+)
 
 ONE_ON_ONE_OVERDUE_DAYS = 21
 
@@ -112,6 +116,7 @@ class OllamaSettings(models.Model):
     selected_model = models.CharField(max_length=200, blank=True)
     summary_prompt = models.TextField(default=DEFAULT_SUMMARY_PROMPT)
     talking_points_prompt = models.TextField(default=DEFAULT_TALKING_POINTS_PROMPT)
+    extract_action_items_prompt = models.TextField(default=DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
