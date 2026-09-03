@@ -16,6 +16,7 @@ urlpatterns = [
     path("action-items/<int:pk>/toggle/", views.action_item_toggle, name="action-item-toggle"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("ai-settings/", views.ai_settings, name="ai-settings"),
+    path("backup/", views.backup_download, name="backup-download"),
     path("questions/", views.question_list, name="question-list"),
     path("questions/<int:pk>/edit/", views.question_edit, name="question-edit"),
     path("questions/<int:pk>/delete/", views.question_delete, name="question-delete"),

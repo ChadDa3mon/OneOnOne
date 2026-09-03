@@ -1,6 +1,10 @@
 import logging
+import sqlite3
+import tempfile
 
+from django.conf import settings
 from django.contrib import messages
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -331,3 +335,25 @@ def dashboard(request):
             "overdue_days_threshold": ONE_ON_ONE_OVERDUE_DAYS,
         },
     )
+
+
+def backup_download(request):
+    db_settings = settings.DATABASES["default"]
+    if db_settings["ENGINE"] != "django.db.backends.sqlite3":
+        return HttpResponse("Backups are only supported for the SQLite database.", status=501)
+
+    filename = f"manager-backup-{timezone.now().strftime('%Y-%m-%d_%H%M%S')}.sqlite3"
+
+    # Use sqlite3's own backup API rather than reading the live file directly,
+    # so a concurrent write can't hand back a torn/inconsistent copy.
+    tmp = tempfile.NamedTemporaryFile(suffix=".sqlite3")
+    source_conn = sqlite3.connect(str(db_settings["NAME"]))
+    dest_conn = sqlite3.connect(tmp.name)
+    with dest_conn:
+        source_conn.backup(dest_conn)
+    source_conn.close()
+    dest_conn.close()
+    tmp.seek(0)
+
+    logger.info("Backup downloaded: %s", filename)
+    return FileResponse(tmp, as_attachment=True, filename=filename, content_type="application/x-sqlite3")
