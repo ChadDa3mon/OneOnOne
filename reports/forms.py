@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 
-from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, Question
+from .models import ActionItem, Answer, Contact, DirectReport, OllamaSettings, OneOnOne, Question
 
 
 class BootstrapFormMixin:
@@ -24,6 +24,15 @@ class DirectReportForm(BootstrapFormMixin, forms.ModelForm):
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "personal_notes": forms.Textarea(attrs={"rows": 4, "placeholder": "e.g. spouse's name, kids, hobbies, background..."}),
+        }
+
+
+class ContactForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Contact
+        fields = ["name", "relationship", "title", "email", "notes"]
+        widgets = {
+            "notes": forms.Textarea(attrs={"rows": 6, "placeholder": "e.g. spouse's name, kids, hobbies, how you know them, current projects..."}),
         }
 
 

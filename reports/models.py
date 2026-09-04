@@ -70,6 +70,34 @@ class DirectReport(models.Model):
         return days is None or days >= ONE_ON_ONE_OVERDUE_DAYS
 
 
+class Contact(models.Model):
+    """A coworker who isn't a direct report - manager, peer, skip-level, etc."""
+
+    RELATIONSHIP_CHOICES = [
+        ("manager", "My manager"),
+        ("peer", "Peer"),
+        ("skip", "Skip-level"),
+        ("other", "Other"),
+    ]
+
+    name = models.CharField(max_length=200)
+    relationship = models.CharField(max_length=20, choices=RELATIONSHIP_CHOICES, default="peer")
+    title = models.CharField(max_length=200, blank=True)
+    email = models.EmailField(blank=True)
+    notes = models.TextField(
+        blank=True,
+        help_text="Anything worth remembering — family, projects, background, how you know them.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Answer(models.Model):
     report = models.ForeignKey(DirectReport, related_name="answers", on_delete=models.CASCADE)
     question = models.ForeignKey(Question, related_name="answers", on_delete=models.CASCADE)

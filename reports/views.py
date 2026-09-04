@@ -11,8 +11,8 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from .forms import ActionItemFormSet, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
-from .models import ActionItem, Answer, DirectReport, OllamaSettings, OneOnOne, ONE_ON_ONE_OVERDUE_DAYS, Question
+from .forms import ActionItemFormSet, ContactForm, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
+from .models import ActionItem, Answer, Contact, DirectReport, OllamaSettings, OneOnOne, ONE_ON_ONE_OVERDUE_DAYS, Question
 from .ollama import OllamaError, generate, list_models
 from .prompt_defaults import (
     DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT,
@@ -66,6 +66,45 @@ def report_delete(request, pk):
     report.delete()
     messages.success(request, f"Removed {name}.")
     return redirect("report-list")
+
+
+def contact_list(request):
+    contacts = Contact.objects.all()
+    return render(request, "reports/contact_list.html", {"contacts": contacts})
+
+
+def contact_add(request):
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            contact = form.save()
+            messages.success(request, f"Added {contact.name}.")
+            return redirect("contact-list")
+    else:
+        form = ContactForm()
+    return render(request, "reports/contact_form.html", {"form": form, "title": "Add contact"})
+
+
+def contact_edit(request, pk):
+    contact = get_object_or_404(Contact, pk=pk)
+    if request.method == "POST":
+        form = ContactForm(request.POST, instance=contact)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Updated {contact.name}.")
+            return redirect("contact-list")
+    else:
+        form = ContactForm(instance=contact)
+    return render(request, "reports/contact_form.html", {"form": form, "title": f"Edit {contact.name}", "contact": contact})
+
+
+@require_POST
+def contact_delete(request, pk):
+    contact = get_object_or_404(Contact, pk=pk)
+    name = contact.name
+    contact.delete()
+    messages.success(request, f"Removed {name}.")
+    return redirect("contact-list")
 
 
 def report_detail(request, pk):
