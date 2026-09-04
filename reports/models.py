@@ -98,6 +98,37 @@ class Contact(models.Model):
         return self.name
 
 
+class QuickNote(models.Model):
+    """A short timestamped note captured from the global quick-note box,
+    for jotting something down before it's forgotten - distinct from a
+    formal 1:1 record, and usable for either a direct report or a contact.
+    """
+
+    report = models.ForeignKey(DirectReport, null=True, blank=True, related_name="quick_notes", on_delete=models.CASCADE)
+    contact = models.ForeignKey(Contact, null=True, blank=True, related_name="quick_notes", on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    models.Q(report__isnull=False, contact__isnull=True)
+                    | models.Q(report__isnull=True, contact__isnull=False)
+                ),
+                name="quicknote_exactly_one_target",
+            )
+        ]
+
+    def __str__(self):
+        return self.text[:50]
+
+    @property
+    def target(self):
+        return self.report or self.contact
+
+
 class Answer(models.Model):
     report = models.ForeignKey(DirectReport, related_name="answers", on_delete=models.CASCADE)
     question = models.ForeignKey(Question, related_name="answers", on_delete=models.CASCADE)

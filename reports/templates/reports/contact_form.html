@@ -23,4 +23,19 @@
     <button type="submit" class="btn btn-primary">Save</button>
     <a href="{% url 'contact-list' %}" class="btn btn-link">Cancel</a>
 </form>
+
+{% if contact %}
+<div class="card mt-4 col-md-6">
+    <div class="card-body">
+        <h2 class="h6">Quick notes</h2>
+        {% if quick_notes %}
+        {% for note in quick_notes %}
+        {% include "reports/_quick_note_item.html" with note=note %}
+        {% endfor %}
+        {% else %}
+        <p class="text-muted small mb-0">No quick notes yet - use the "+ Note" button in the nav to jot one down.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}

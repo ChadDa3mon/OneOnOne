@@ -11,7 +11,17 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .forms import ActionItemFormSet, ContactForm, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
-from .models import ActionItem, Answer, Contact, DirectReport, OllamaSettings, OneOnOne, ONE_ON_ONE_OVERDUE_DAYS, Question
+from .models import (
+    ActionItem,
+    Answer,
+    Contact,
+    DirectReport,
+    OllamaSettings,
+    OneOnOne,
+    ONE_ON_ONE_OVERDUE_DAYS,
+    Question,
+    QuickNote,
+)
 from .ollama import OllamaError, generate, list_models
 from .prompt_defaults import (
     DEFAULT_EXTRACT_ACTION_ITEMS_PROMPT,
@@ -94,7 +104,17 @@ def contact_edit(request, pk):
             return redirect("contact-list")
     else:
         form = ContactForm(instance=contact)
-    return render(request, "reports/contact_form.html", {"form": form, "title": f"Edit {contact.name}", "contact": contact})
+    return render(
+        request,
+        "reports/contact_form.html",
+        {
+            "form": form,
+            "title": f"Edit {contact.name}",
+            "contact": contact,
+            "quick_notes": contact.quick_notes.all(),
+            "current_target": f"contact:{contact.pk}",
+        },
+    )
 
 
 @require_POST
@@ -124,6 +144,8 @@ def report_detail(request, pk):
             "answer_rows": answer_rows,
             "one_on_ones": one_on_ones,
             "ai_configured": ai_configured,
+            "quick_notes": report.quick_notes.all(),
+            "current_target": f"report:{report.pk}",
         },
     )
 
@@ -460,6 +482,36 @@ def global_search(request):
             {"type": "contact", "obj": c} for c in Contact.objects.filter(name__icontains=query)[:8]
         ]
     return render(request, "reports/_search_results.html", {"results": results, "query": query})
+
+
+@require_POST
+def quick_note_add(request):
+    text = request.POST.get("text", "").strip()
+    target = request.POST.get("target", "")
+    target_type, _, target_id = target.partition(":")
+
+    if not text:
+        return render(request, "reports/_quick_note_status.html", {"error": "Write something first."}, status=400)
+
+    if target_type == "report":
+        person = get_object_or_404(DirectReport, pk=target_id)
+        QuickNote.objects.create(report=person, text=text)
+    elif target_type == "contact":
+        person = get_object_or_404(Contact, pk=target_id)
+        QuickNote.objects.create(contact=person, text=text)
+    else:
+        return render(request, "reports/_quick_note_status.html", {"error": "Choose who this is about first."}, status=400)
+
+    response = render(request, "reports/_quick_note_status.html", {"name": person.name})
+    response["HX-Trigger"] = "quick-note-saved"
+    return response
+
+
+@require_POST
+def quick_note_delete(request, pk):
+    note = get_object_or_404(QuickNote, pk=pk)
+    note.delete()
+    return HttpResponse("")
 
 
 def dashboard(request):

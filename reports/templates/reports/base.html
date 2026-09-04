@@ -40,9 +40,58 @@
                    hx-target="#nav-search-results" hx-swap="innerHTML">
             <div id="nav-search-results"></div>
         </div>
+        <button type="button" class="btn btn-sm btn-outline-light me-2" data-bs-toggle="modal"
+                data-bs-target="#quick-note-modal" data-default-target="{{ current_target|default:'' }}">
+            + Note
+        </button>
         <button type="button" id="theme-toggle" class="btn btn-sm btn-outline-light">Dark mode</button>
     </div>
 </nav>
+
+<div class="modal fade" id="quick-note-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="quick-note-form" hx-post="{% url 'quick-note-add' %}" hx-target="#quick-note-status" hx-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Quick note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="quick-note-status"></div>
+                    <div class="mb-3">
+                        <label class="form-label" for="quick-note-target">About</label>
+                        <select id="quick-note-target" name="target" class="form-control" required>
+                            <option value="" disabled selected>Choose a person…</option>
+                            {% if quick_note_reports %}
+                            <optgroup label="Direct Reports">
+                                {% for r in quick_note_reports %}
+                                <option value="report:{{ r.pk }}">{{ r.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                            {% if quick_note_contacts %}
+                            <optgroup label="Contacts">
+                                {% for c in quick_note_contacts %}
+                                <option value="contact:{{ c.pk }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="quick-note-text">Note</label>
+                        <textarea id="quick-note-text" name="text" class="form-control" rows="4"
+                                  placeholder="Jot down anything worth remembering…" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-sm">Save note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <div class="container pb-5">
     {% if messages %}
         {% for message in messages %}
@@ -100,6 +149,31 @@
             button.textContent = loadingText;
         }, 0);
     });
+</script>
+<script>
+    (function () {
+        var modalEl = document.getElementById("quick-note-modal");
+        var form = document.getElementById("quick-note-form");
+        var select = document.getElementById("quick-note-target");
+
+        // Preselect the person whose page the "+ Note" button was clicked
+        // from, so logging a note about whoever you're already looking at
+        // is a single click plus typing - no extra picking.
+        modalEl.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+            var defaultTarget = button ? button.getAttribute("data-default-target") : "";
+            if (defaultTarget) select.value = defaultTarget;
+        });
+
+        document.body.addEventListener("quick-note-saved", function () {
+            setTimeout(function () {
+                form.reset();
+                document.getElementById("quick-note-status").innerHTML = "";
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }, 900);
+        });
+    })();
 </script>
 <script>
     (function () {

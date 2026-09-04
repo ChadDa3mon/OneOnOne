@@ -18,6 +18,19 @@
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h6">Quick notes</h2>
+        {% if quick_notes %}
+        {% for note in quick_notes %}
+        {% include "reports/_quick_note_item.html" with note=note %}
+        {% endfor %}
+        {% else %}
+        <p class="text-muted small mb-0">No quick notes yet - use the "+ Note" button in the nav to jot one down.</p>
+        {% endif %}
+    </div>
+</div>
+
 <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#questions-pane" type="button">Profile Questions</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#oneonone-pane" type="button">1:1 History</button></li>
