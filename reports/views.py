@@ -324,7 +324,7 @@ def oneonone_add(request, pk):
             return redirect("report-detail", pk=report.pk)
         formset = ActionItemFormSet(request.POST)
     else:
-        form = OneOnOneForm()
+        form = OneOnOneForm(initial={"date": timezone.now().date()})
         formset = ActionItemFormSet()
     return render(
         request,
