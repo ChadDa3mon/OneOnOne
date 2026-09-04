@@ -30,6 +30,10 @@ class DirectReport(models.Model):
     title = models.CharField(max_length=200, blank=True)
     email = models.EmailField(blank=True)
     start_date = models.DateField(null=True, blank=True)
+    personal_notes = models.TextField(
+        blank=True,
+        help_text="Family, interests, background — anything worth remembering that isn't a 1:1 topic.",
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     ai_summary = models.TextField(blank=True)

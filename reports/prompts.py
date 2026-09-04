@@ -36,6 +36,7 @@ def _context(report):
         "qa": "\n".join(_qa_lines(report)),
         "action_items": "\n".join(_open_action_item_lines(report)),
         "notes": "\n".join(note_lines or ["(No 1:1 notes yet.)"]),
+        "personal_notes": report.personal_notes.strip() or "(None recorded.)",
     }
 
 

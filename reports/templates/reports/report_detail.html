@@ -7,6 +7,7 @@
         {% if report.title %}<div class="text-muted">{{ report.title }}</div>{% endif %}
         {% if report.email %}<div class="text-muted small">{{ report.email }}</div>{% endif %}
         {% if report.start_date %}<div class="text-muted small">Start date: {{ report.start_date }}</div>{% endif %}
+        {% if report.personal_notes %}<div class="text-muted small fst-italic mt-1" style="white-space: pre-wrap;">{{ report.personal_notes }}</div>{% endif %}
     </div>
     <div>
         <a href="{% url 'report-edit' report.pk %}" class="btn btn-sm btn-outline-secondary">Edit profile</a>

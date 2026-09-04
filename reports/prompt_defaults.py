@@ -3,14 +3,17 @@
 # page (stored on OllamaSettings); these are just the starting point for a
 # fresh install.
 #
-# Available placeholders: $who, $qa, $action_items, $notes
+# Available placeholders: $who, $qa, $action_items, $notes, $personal_notes
 
 DEFAULT_SUMMARY_PROMPT = """You are helping an engineering manager get up to speed on their direct report, $who.
-Below are the direct report's profile answers and their currently open action items from past 1:1s.
+Below are the direct report's profile answers, personal notes, and their currently open action items from past 1:1s.
 Write a 1 to 3 paragraph summary covering what the manager most needs to know: this person's motivations, working style, growth areas, and anything currently outstanding. Synthesize the information rather than repeating it verbatim. Do not include a preamble or heading, just the summary.
 
 Profile Q&A:
 $qa
+
+Personal notes:
+$personal_notes
 
 Open action items:
 $action_items"""
@@ -20,6 +23,9 @@ Based on the context below, suggest 3 to 6 specific talking points or questions 
 
 Profile Q&A:
 $qa
+
+Personal notes:
+$personal_notes
 
 Open action items:
 $action_items

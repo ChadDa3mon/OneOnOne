@@ -20,9 +20,10 @@ class BootstrapFormMixin:
 class DirectReportForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = DirectReport
-        fields = ["name", "title", "email", "start_date", "is_active"]
+        fields = ["name", "title", "email", "start_date", "personal_notes", "is_active"]
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}),
+            "personal_notes": forms.Textarea(attrs={"rows": 4, "placeholder": "e.g. spouse's name, kids, hobbies, background..."}),
         }
 
 
