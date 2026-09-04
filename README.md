@@ -1,4 +1,6 @@
-# Manager
+# People Cache
+
+*Because human relationships shouldn't rely on RAM.*
 
 A small Django app for tracking your direct reports: a shared bank of profile
 questions you fill in per person, plus a running history of 1:1 notes and

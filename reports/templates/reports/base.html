@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Manager{% endblock %}</title>
+    <title>{% block title %}People Cache{% endblock %}</title>
     <script>
         (function () {
             var stored = localStorage.getItem("theme");
@@ -29,7 +29,7 @@
 <body>
 <nav class="navbar navbar-expand navbar-dark bg-dark mb-4">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'report-list' %}">Manager</a>
+        <a class="navbar-brand" href="{% url 'report-list' %}" title="Because human relationships shouldn't rely on RAM.">People Cache</a>
         <div class="navbar-nav me-auto">
             <a class="nav-link" href="{% url 'report-list' %}">Direct Reports</a>
             <a class="nav-link" href="{% url 'contact-list' %}">Contacts</a>
