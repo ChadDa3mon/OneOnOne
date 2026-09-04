@@ -1,0 +1,7 @@
+<div class="form-check action-item {% if item.is_done %}done{% endif %}" id="action-item-{{ item.pk }}">
+    <input class="form-check-input" type="checkbox" id="item-{{ item.pk }}"
+           hx-post="{% url 'action-item-toggle' item.pk %}"
+           hx-target="#action-item-{{ item.pk }}" hx-swap="outerHTML"
+           {% if item.is_done %}checked{% endif %}>
+    <label class="form-check-label" for="item-{{ item.pk }}">{{ item.description }}</label>
+</div>

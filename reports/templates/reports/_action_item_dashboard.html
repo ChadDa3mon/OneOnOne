@@ -1,0 +1,12 @@
+<div class="list-group-item form-check action-item {% if item.is_done %}done{% endif %}" id="action-item-{{ item.pk }}">
+    <input class="form-check-input" type="checkbox" id="todo-{{ item.pk }}"
+           hx-post="{% url 'action-item-toggle' item.pk %}"
+           hx-target="#action-item-{{ item.pk }}" hx-swap="outerHTML"
+           hx-vals='{"variant": "dashboard", "show_completed": "{% if show_completed %}1{% else %}0{% endif %}"}'
+           {% if item.is_done %}checked{% endif %}>
+    <label class="form-check-label" for="todo-{{ item.pk }}">{{ item.description }}</label>
+    <div class="text-muted small">
+        <a href="{% url 'report-detail' item.one_on_one.report_id %}">{{ item.one_on_one.report.name }}</a>
+        &middot; {{ item.one_on_one.date }}
+    </div>
+</div>

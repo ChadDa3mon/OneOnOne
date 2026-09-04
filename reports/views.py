@@ -8,7 +8,6 @@ from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .forms import ActionItemFormSet, ContactForm, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
@@ -355,9 +354,18 @@ def action_item_toggle(request, pk):
     item = get_object_or_404(ActionItem, pk=pk)
     item.is_done = not item.is_done
     item.save(update_fields=["is_done"])
-    next_url = request.POST.get("next")
-    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
-        return redirect(next_url)
+
+    if request.headers.get("HX-Request"):
+        if request.POST.get("variant") == "dashboard":
+            show_completed = request.POST.get("show_completed") == "1"
+            if item.is_done and not show_completed:
+                # Hidden-completed view: toggling an item done removes it
+                # from view immediately rather than leaving a checked,
+                # about-to-be-filtered-out row until the next full load.
+                return HttpResponse("")
+            return render(request, "reports/_action_item_dashboard.html", {"item": item, "show_completed": show_completed})
+        return render(request, "reports/_action_item_plain.html", {"item": item})
+
     return redirect("report-detail", pk=item.one_on_one.report_id)
 
 

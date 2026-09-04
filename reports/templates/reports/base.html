@@ -44,6 +44,20 @@
     {% block content %}{% endblock %}
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.12/dist/htmx.min.js"></script>
+<script>
+    // Django's CSRF protection requires this header on any state-changing
+    // request; htmx has no built-in Django integration, so attach it here
+    // to every request htmx makes (reads the cookie Django's own {% csrf_token %}
+    // machinery already sets - no extra endpoint needed).
+    function getCookie(name) {
+        var match = document.cookie.match("(^|;\\s*)" + name + "=([^;]*)");
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+    document.body.addEventListener("htmx:configRequest", function (event) {
+        event.detail.headers["X-CSRFToken"] = getCookie("csrftoken");
+    });
+</script>
 <script>
     (function () {
         var button = document.getElementById("theme-toggle");
