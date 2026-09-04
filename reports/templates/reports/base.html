@@ -29,13 +29,12 @@
 <body>
 <nav class="navbar navbar-expand navbar-dark bg-dark mb-4">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'report-list' %}" title="Because human relationships shouldn't rely on RAM.">People Cache</a>
+        <a class="navbar-brand" href="{% url 'dashboard' %}" title="Because human relationships shouldn't rely on RAM.">People Cache</a>
         <div class="navbar-nav me-auto">
             <a class="nav-link" href="{% url 'report-list' %}">Direct Reports</a>
             <a class="nav-link" href="{% url 'contact-list' %}">Contacts</a>
             <a class="nav-link" href="{% url 'resource-list' %}">Resources</a>
             <a class="nav-link" href="{% url 'question-list' %}">Questions</a>
-            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
             <a class="nav-link" href="{% url 'ai-settings' %}">AI Settings</a>
             <a class="nav-link" href="{% url 'backup-download' %}">Backup</a>
         </div>
