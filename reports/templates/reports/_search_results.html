@@ -1,0 +1,15 @@
+{% if query %}
+<div class="list-group position-absolute w-100 shadow" style="z-index: 1050;">
+    {% for result in results %}
+    <a href="{% if result.type == 'report' %}{% url 'report-detail' result.obj.pk %}{% else %}{% url 'contact-edit' result.obj.pk %}{% endif %}"
+       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2">
+        <span>{{ result.obj.name }}</span>
+        <span class="badge bg-secondary">
+            {% if result.type == "report" %}Direct report{% else %}{{ result.obj.get_relationship_display }}{% endif %}
+        </span>
+    </a>
+    {% empty %}
+    <div class="list-group-item text-muted small">No matches.</div>
+    {% endfor %}
+</div>
+{% endif %}

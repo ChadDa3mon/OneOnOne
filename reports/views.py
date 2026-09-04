@@ -450,6 +450,18 @@ def ai_settings(request):
     )
 
 
+def global_search(request):
+    query = request.GET.get("q", "").strip()
+    results = []
+    if query:
+        results = [
+            {"type": "report", "obj": r} for r in DirectReport.objects.filter(name__icontains=query)[:8]
+        ] + [
+            {"type": "contact", "obj": c} for c in Contact.objects.filter(name__icontains=query)[:8]
+        ]
+    return render(request, "reports/_search_results.html", {"results": results, "query": query})
+
+
 def dashboard(request):
     show_completed = request.GET.get("show") == "all"
     items = ActionItem.objects.select_related("one_on_one", "one_on_one__report")

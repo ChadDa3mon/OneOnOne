@@ -18,6 +18,7 @@ urlpatterns = [
     path("contacts/add/", views.contact_add, name="contact-add"),
     path("contacts/<int:pk>/edit/", views.contact_edit, name="contact-edit"),
     path("contacts/<int:pk>/delete/", views.contact_delete, name="contact-delete"),
+    path("search/", views.global_search, name="global-search"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("ai-settings/", views.ai_settings, name="ai-settings"),
     path("backup/", views.backup_download, name="backup-download"),
