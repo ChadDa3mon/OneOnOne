@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .forms import ActionItemFormSet, ContactForm, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm
+from .forms import ActionItemFormSet, ContactForm, DirectReportForm, OllamaSettingsForm, OneOnOneForm, QuestionForm, ResourceForm
 from .models import (
     ActionItem,
     Answer,
@@ -21,6 +21,7 @@ from .models import (
     ONE_ON_ONE_OVERDUE_DAYS,
     Question,
     QuickNote,
+    Resource,
 )
 from .ollama import OllamaError, generate, list_models
 from .prompt_defaults import (
@@ -252,6 +253,58 @@ def question_delete(request, pk):
     return redirect("question-list")
 
 
+def resource_list(request):
+    resources = Resource.objects.all()
+    active_tag = request.GET.get("tag", "")
+    if active_tag:
+        resources = resources.filter(tag=active_tag)
+    tags = Resource.objects.exclude(tag="").order_by("tag").values_list("tag", flat=True).distinct()
+    return render(
+        request,
+        "reports/resource_list.html",
+        {"resources": resources, "tags": tags, "active_tag": active_tag},
+    )
+
+
+def resource_add(request):
+    if request.method == "POST":
+        form = ResourceForm(request.POST)
+        if form.is_valid():
+            resource = form.save()
+            messages.success(request, f"Added {resource.title}.")
+            return redirect("resource-detail", pk=resource.pk)
+    else:
+        form = ResourceForm()
+    return render(request, "reports/resource_form.html", {"form": form, "title": "Add resource"})
+
+
+def resource_detail(request, pk):
+    resource = get_object_or_404(Resource, pk=pk)
+    return render(request, "reports/resource_detail.html", {"resource": resource})
+
+
+def resource_edit(request, pk):
+    resource = get_object_or_404(Resource, pk=pk)
+    if request.method == "POST":
+        form = ResourceForm(request.POST, instance=resource)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Updated {resource.title}.")
+            return redirect("resource-detail", pk=resource.pk)
+    else:
+        form = ResourceForm(instance=resource)
+    return render(request, "reports/resource_form.html", {"form": form, "title": f"Edit {resource.title}", "resource": resource})
+
+
+@require_POST
+def resource_delete(request, pk):
+    resource = get_object_or_404(Resource, pk=pk)
+    title = resource.title
+    resource.delete()
+    messages.success(request, f"Removed {title}.")
+    return redirect("resource-list")
+
+
 def _suggest_action_items(request, one_on_one_instance):
     """Handle a 'suggest_action_items' submit: ask Ollama to find action items
     in the notes text and append them as new, unsaved rows onto the action
@@ -480,6 +533,8 @@ def global_search(request):
             {"type": "report", "obj": r} for r in DirectReport.objects.filter(name__icontains=query)[:8]
         ] + [
             {"type": "contact", "obj": c} for c in Contact.objects.filter(name__icontains=query)[:8]
+        ] + [
+            {"type": "resource", "obj": r} for r in Resource.objects.filter(title__icontains=query)[:8]
         ]
     return render(request, "reports/_search_results.html", {"results": results, "query": query})
 

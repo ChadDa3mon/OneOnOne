@@ -1,0 +1,36 @@
+{% extends "reports/base.html" %}
+{% block title %}Resources{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Resources</h1>
+    <a href="{% url 'resource-add' %}" class="btn btn-primary">Add resource</a>
+</div>
+
+{% if tags %}
+<div class="mb-3">
+    <a href="{% url 'resource-list' %}" class="btn btn-sm {% if not active_tag %}btn-secondary{% else %}btn-outline-secondary{% endif %} me-1 mb-1">All</a>
+    {% for tag in tags %}
+    <a href="{% url 'resource-list' %}?tag={{ tag|urlencode }}"
+       class="btn btn-sm {% if tag == active_tag %}btn-secondary{% else %}btn-outline-secondary{% endif %} me-1 mb-1">{{ tag }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if resources %}
+<div class="list-group">
+    {% for resource in resources %}
+    <a href="{% url 'resource-detail' resource.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <div>
+            <div class="fw-semibold">{{ resource.title }}</div>
+            <div class="text-muted small">Updated {{ resource.updated_at|date:"M j, Y" }}</div>
+        </div>
+        {% if resource.tag %}<span class="badge bg-secondary">{{ resource.tag }}</span>{% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">
+    {% if active_tag %}No resources tagged "{{ active_tag }}".{% else %}No resources yet - start building your playbook.{% endif %}
+</p>
+{% endif %}
+{% endblock %}

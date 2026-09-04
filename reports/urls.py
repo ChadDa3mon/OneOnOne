@@ -27,4 +27,9 @@ urlpatterns = [
     path("questions/", views.question_list, name="question-list"),
     path("questions/<int:pk>/edit/", views.question_edit, name="question-edit"),
     path("questions/<int:pk>/delete/", views.question_delete, name="question-delete"),
+    path("resources/", views.resource_list, name="resource-list"),
+    path("resources/add/", views.resource_add, name="resource-add"),
+    path("resources/<int:pk>/", views.resource_detail, name="resource-detail"),
+    path("resources/<int:pk>/edit/", views.resource_edit, name="resource-edit"),
+    path("resources/<int:pk>/delete/", views.resource_delete, name="resource-delete"),
 ]

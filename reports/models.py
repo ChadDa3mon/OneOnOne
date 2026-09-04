@@ -129,6 +129,27 @@ class QuickNote(models.Model):
         return self.report or self.contact
 
 
+class Resource(models.Model):
+    """A saved reference note - an article link, a technique, a quote -
+    written in Markdown, for building up a personal management playbook."""
+
+    title = models.CharField(max_length=200)
+    tag = models.CharField(max_length=100, blank=True, help_text="A topic label, e.g. 'Servant Leadership' or 'Difficult Conversations'.")
+    url = models.URLField(blank=True, help_text="Link to the original source, if any.")
+    body = models.TextField(blank=True, help_text="Markdown supported.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("resource-detail", args=[self.pk])
+
+
 class Answer(models.Model):
     report = models.ForeignKey(DirectReport, related_name="answers", on_delete=models.CASCADE)
     question = models.ForeignKey(Question, related_name="answers", on_delete=models.CASCADE)

@@ -19,6 +19,11 @@
         textarea { white-space: pre-wrap; }
         .action-item.done label { text-decoration: line-through; color: var(--bs-secondary-color); }
         #nav-search-results:empty { display: none; }
+        .markdown-body pre { background: var(--bs-tertiary-bg); padding: .75rem; border-radius: .375rem; overflow-x: auto; }
+        .markdown-body code { background: var(--bs-tertiary-bg); padding: .1rem .3rem; border-radius: .25rem; }
+        .markdown-body pre code { background: none; padding: 0; }
+        .markdown-body blockquote { border-left: 3px solid var(--bs-border-color); padding-left: 1rem; color: var(--bs-secondary-color); }
+        .markdown-body img { max-width: 100%; }
     </style>
 </head>
 <body>
@@ -28,13 +33,14 @@
         <div class="navbar-nav me-auto">
             <a class="nav-link" href="{% url 'report-list' %}">Direct Reports</a>
             <a class="nav-link" href="{% url 'contact-list' %}">Contacts</a>
+            <a class="nav-link" href="{% url 'resource-list' %}">Resources</a>
             <a class="nav-link" href="{% url 'question-list' %}">Questions</a>
             <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
             <a class="nav-link" href="{% url 'ai-settings' %}">AI Settings</a>
             <a class="nav-link" href="{% url 'backup-download' %}">Backup</a>
         </div>
         <div class="position-relative me-3" style="width: 220px;">
-            <input type="search" id="nav-search" name="q" class="form-control form-control-sm" placeholder="Search people…"
+            <input type="search" id="nav-search" name="q" class="form-control form-control-sm" placeholder="Search…"
                    autocomplete="off"
                    hx-get="{% url 'global-search' %}" hx-trigger="keyup changed delay:250ms, search"
                    hx-target="#nav-search-results" hx-swap="innerHTML">

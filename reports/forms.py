@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 
-from .models import ActionItem, Answer, Contact, DirectReport, OllamaSettings, OneOnOne, Question
+from .models import ActionItem, Answer, Contact, DirectReport, OllamaSettings, OneOnOne, Question, Resource
 
 
 class BootstrapFormMixin:
@@ -33,6 +33,17 @@ class ContactForm(BootstrapFormMixin, forms.ModelForm):
         fields = ["name", "relationship", "title", "email", "notes"]
         widgets = {
             "notes": forms.Textarea(attrs={"rows": 6, "placeholder": "e.g. spouse's name, kids, hobbies, how you know them, current projects..."}),
+        }
+
+
+class ResourceForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Resource
+        fields = ["title", "tag", "url", "body"]
+        widgets = {
+            "tag": forms.TextInput(attrs={"placeholder": "e.g. Servant Leadership"}),
+            "url": forms.URLInput(attrs={"placeholder": "https://…"}),
+            "body": forms.Textarea(attrs={"rows": 16, "class": "font-monospace"}),
         }
 
 
